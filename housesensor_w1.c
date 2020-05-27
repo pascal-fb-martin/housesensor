@@ -57,6 +57,7 @@ static void ReadDevice (const char *id) {
         if (strstr (line, " YES")) {
             fgets (line, sizeof(line), f);
             if (BelongsTo (id, DS1820)) {
+                char value[8];
                 p = strstr(line, " t=");
                 if (p) {
                     for (eol = p; *eol > 0; ++eol) {
@@ -65,7 +66,15 @@ static void ReadDevice (const char *id) {
                             break;
                         }
                     }
-                    housesensor_db_set ("w1", id, p+3, "Celsius");
+                    strncpy(value, p+3, sizeof(value));
+                    value[6] = 0;
+                    value[5] = value[4];
+                    value[4] = value[3];
+                    value[3] = value[2];
+                    value[2] = '.';
+                    p = value + strlen(value);
+                    while (*(--p) == '0') *p = 0;
+                    housesensor_db_set ("w1", id, value, "Celsius");
                 }
             }
         }
