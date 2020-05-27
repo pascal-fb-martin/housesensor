@@ -25,6 +25,7 @@ package:
 install:
 	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; fi
 	mkdir -p /usr/local/bin
+	mkdir -p /var/lib/house
 	rm -f /usr/local/bin/housesensor /etc/init.d/housesensor
 	cp housesensor /usr/local/bin
 	cp init.debian /etc/init.d/housesensor
