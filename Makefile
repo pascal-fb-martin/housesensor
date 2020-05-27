@@ -16,7 +16,7 @@ rebuild: clean all
 	gcc -c -g -O -o $@ $<
 
 housesensor: $(OBJS)
-	gcc -g -O -o housesensor $(OBJS) -lhouseportal -lechttp -lrt
+	gcc -g -O -o housesensor $(OBJS) -lhouseportal -lechttp -lcrypto -lrt
 
 package:
 	mkdir -p packages
