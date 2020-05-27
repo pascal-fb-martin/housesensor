@@ -29,3 +29,5 @@ const char *housesensor_db_option (const char *name);
 
 void housesensor_db_json (char *buffer, int size);
 
+void housesensor_db_background (time_t now);
+

@@ -71,7 +71,8 @@ static void hs_background (int fd, int mode) {
     static time_t LastRenewal = 0;
     time_t now = time(0);
 
-    housesensor_w1_background(now);
+    housesensor_w1_background (now);
+    housesensor_db_background (now);
 
     if (use_houseportal) {
         static const char *path[] = {"/sensor"};

@@ -43,6 +43,11 @@
  * const char *housesensor_db_json (char *buffer, int size);
  *
  *    Get a complete list of latest measurement in JSON format.
+ *
+ * void housesensor_db_background (time_t now);
+ *
+ *    This background function performs some cleanup and must be
+ *    called periodically.
  */
 
 #include "housesensor.h"
@@ -80,6 +85,13 @@ static int SensorLocationCount = 0;
 
 static SensorOption SensorOptionDatabase[128];
 static int SensorOptionCount = 0;
+
+static const char SensorLogName[] = "/dev/shm/housesensor.log";
+static FILE *SensorLog = 0;
+static time_t SensorLogLastWrite = 0;
+static const char SensorMoveFormat[] =
+   "mv /dev/shm/housesensor.log /var/lib/house/sensor-%04d-%02d-%02d.log";
+
 
 static void DecodeLine (char *buffer) {
 
@@ -183,11 +195,17 @@ const char *housesensor_db_device_next (const char *driver) {
 void housesensor_db_set (const char *driver, const char *device,
                          const char *value, const char *unit) {
     int i;
+    time_t now = time(0);
+    SensorContext *s;
+
     for (i = 0; i < SensorCount; ++i) {
         SensorContext *s = SensorDatabase + i;
         if (strcmp (s->device, device)) continue;
         if (strcmp (s->driver, driver)) continue;
+        break;
+    }
 
+    if (i < SensorCount) {
         strncpy (s->value, value, sizeof(s->value));
         s->value[sizeof(s->value)-1] = 0;
 
@@ -195,10 +213,18 @@ void housesensor_db_set (const char *driver, const char *device,
             strncpy (s->unit, unit, sizeof(s->unit));
             s->unit[sizeof(s->unit)-1] = 0;
         }
-        s->timestamp = time(0);
+        s->timestamp = now;
         if (echttp_isdebug()) printf ("Set %s.%s to %s %s\n",
                                       driver, device, s->value, s->unit);
-        break;
+
+        if (SensorLog == 0) {
+            SensorLog = fopen (SensorLogName, "a");
+        }
+        if (SensorLog) {
+            fprintf (SensorLog, "%ld,%s,%s,%s,%s\n",
+                     (long)now, s->location, s->name, value, s->unit);
+            SensorLogLastWrite = now;
+        }
     }
 }
 
@@ -266,6 +292,28 @@ void housesensor_db_json (char *buffer, int size) {
         length += strlen(buffer+length);
     }
     snprintf (buffer+length, size-length, "}}");
+}
+
+void housesensor_db_background (time_t now) {
+
+    static time_t LastMove = 0;
+
+    struct tm *t;
+
+    if (SensorLog && now > SensorLogLastWrite + 10) {
+
+        fclose (SensorLog);
+        SensorLog = 0;
+
+        t = localtime (&now);
+        if (t->tm_hour == 0 && now > LastMove + 7200) {
+            char command[1024];
+            snprintf (command, sizeof(command), SensorMoveFormat,
+                      t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+            system (command);
+            LastMove = now;
+        }
+    }
 }
 
 void housesensor_db_initialize (int argc, const char **argv) {
