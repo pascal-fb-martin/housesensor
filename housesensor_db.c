@@ -195,7 +195,9 @@ void housesensor_db_set (const char *driver, const char *device,
             strncpy (s->unit, unit, sizeof(s->unit));
             s->unit[sizeof(s->unit)-1] = 0;
         }
-        s->timestamp = time(0);;
+        s->timestamp = time(0);
+        if (echttp_isdebug()) printf ("Set %s.%s to %s %s\n",
+                                      driver, device, s->value, s->unit);
         break;
     }
 }

@@ -67,11 +67,12 @@ static void ReadDevice (const char *id) {
                         }
                     }
                     strncpy(value, p+3, sizeof(value));
-                    value[6] = 0;
-                    value[5] = value[4];
-                    value[4] = value[3];
-                    value[3] = value[2];
-                    value[2] = '.';
+                    p = value + strlen(value)-3;
+                    p[4] = 0;
+                    p[3] = p[2];
+                    p[2] = p[1];
+                    p[1] = p[0];
+                    p[0] = '.';
                     p = value + strlen(value);
                     while (*(--p) == '0') *p = 0;
                     housesensor_db_set ("w1", id, value, "Celsius");
