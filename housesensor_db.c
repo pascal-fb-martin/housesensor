@@ -299,14 +299,15 @@ void housesensor_db_background (time_t now) {
     static time_t LastMove = 0;
 
     struct tm *t;
+    time_t yesterday = now - 3600;
 
     if (SensorLog && now > SensorLogLastWrite + 10) {
 
         fclose (SensorLog);
         SensorLog = 0;
 
-        t = localtime (&now);
-        if (t->tm_hour == 0 && now > LastMove + 7200) {
+        t = localtime (&yesterday);
+        if (t->tm_hour == 23 && now > LastMove + 7200) {
             char command[1024];
             snprintf (command, sizeof(command), SensorMoveFormat,
                       t->tm_year+1900, t->tm_mon+1, t->tm_mday);

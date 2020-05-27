@@ -34,3 +34,5 @@ The location is an arbitrary user name, which is used to organize the sensors in
 
 A unit can be specified to accomodate sensors that have no intrinsic unit.
 
+The program also records all measurements. The recording is accumulated each day in /dev/shm/housesensor.log (i.e. in RAM) and copied each day to /var/lib/house as sensor-YYYY-MM-DD.log, where YYYY, MM and DD represents the current day.
+
