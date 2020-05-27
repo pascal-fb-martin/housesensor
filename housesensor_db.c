@@ -61,6 +61,7 @@ typedef struct {
     char *name;
     char unit[32];
     char value[128]; // ASCII representation.
+    time_t timestamp;
     int   next;
 } SensorContext;
 
@@ -121,6 +122,7 @@ static void DecodeLine (char *buffer) {
         else
             s->unit[0] = 0;
         s->value[0] = 0;
+        s->timestamp = 0;
         for (i = 0; i < SensorLocationCount; ++i) {
             if (strcmp(SensorLocationDatabase[i].location, s->location) == 0)
                 break;
@@ -181,16 +183,20 @@ const char *housesensor_db_device_next (const char *driver) {
 void housesensor_db_set (const char *driver, const char *device,
                          const char *value, const char *unit) {
     int i;
-    for (i = SensorDriverCursor; i < SensorCount; ++i) {
+    for (i = 0; i < SensorCount; ++i) {
         SensorContext *s = SensorDatabase + i;
         if (strcmp (s->device, device)) continue;
         if (strcmp (s->driver, driver)) continue;
+
         strncpy (s->value, value, sizeof(s->value));
         s->value[sizeof(s->value)-1] = 0;
+
         if (unit && s->unit[0] == 0) {
             strncpy (s->unit, unit, sizeof(s->unit));
             s->unit[sizeof(s->unit)-1] = 0;
         }
+        s->timestamp = time(0);;
+        break;
     }
 }
 
@@ -236,6 +242,12 @@ void housesensor_db_json (char *buffer, int size) {
                       "%s{\"name\":\"%s\"", prefix, s->name);
             length += strlen(buffer+length);
             prefix = ",";
+
+            if (s->timestamp) {
+                snprintf (buffer+length, size-length,
+                          ",\"timestamp\":%ld", (long) s->timestamp);
+                length += strlen(buffer+length);
+            }
 
             if (s->value[0] == 0) {
                 snprintf (buffer+length, size-length, ",\"value\":null}");
