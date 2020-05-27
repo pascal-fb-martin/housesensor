@@ -33,7 +33,10 @@
 #include "housesensor_db.h"
 
 #include "echttp_static.h"
+#include "houseportalclient.h"
 
+
+static int use_houseportal = 0;
 
 static void hs_help (const char *argv0) {
 
@@ -64,8 +67,22 @@ static const char *hs_sensor_json (const char *method, const char *uri,
 }
 
 static void hs_background (int fd, int mode) {
+
+    static time_t LastRenewal = 0;
     time_t now = time(0);
+
     housesensor_w1_background(now);
+
+    if (use_houseportal) {
+        static const char *path[] = {"/sensor"};
+        if (now >= LastRenewal + 60) {
+            if (LastRenewal > 0)
+                houseportal_renew();
+            else
+                houseportal_register (echttp_port(4), path, 1);
+            LastRenewal = now;
+        }
+    }
 }
 
 int main (int argc, const char **argv) {
@@ -82,13 +99,17 @@ int main (int argc, const char **argv) {
         if (echttp_option_present("-h", argv[i])) {
             hs_help(argv[0]);
         }
+        if (echttp_option_present ("-http-service=dynamic", argv[i])) {
+            houseportal_initialize (argc, argv);
+            use_houseportal = 1;
+        }
     }
 
     housesensor_db_initialize (argc, argv);
     housesensor_w1_initialize (argc, argv);
 
     echttp_open (argc, argv);
-    echttp_route_uri ("/sensor", hs_sensor_json);
+    echttp_route_uri ("/sensor/current", hs_sensor_json);
     echttp_static_route ("/", "/usr/share/house/public");
     echttp_background (&hs_background);
     echttp_loop();
