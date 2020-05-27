@@ -199,7 +199,7 @@ void housesensor_db_set (const char *driver, const char *device,
     SensorContext *s;
 
     for (i = 0; i < SensorCount; ++i) {
-        SensorContext *s = SensorDatabase + i;
+        s = SensorDatabase + i;
         if (strcmp (s->device, device)) continue;
         if (strcmp (s->driver, driver)) continue;
         break;
