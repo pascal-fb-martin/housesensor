@@ -31,8 +31,8 @@ install:
 	chown root:root /usr/local/bin/housesensor /etc/init.d/housesensor
 	chmod 755 /usr/local/bin/housesensor /etc/init.d/housesensor
 	touch /etc/default/housesensor
-	mkdir -p /etc/housesensor
-	touch /etc/housesensor/housesensor.config
+	mkdir -p /etc/house
+	touch /etc/house/sensor.config
 	systemctl daemon-reload
 	systemctl enable housesensor
 	systemctl start housesensor
