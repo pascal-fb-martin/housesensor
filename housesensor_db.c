@@ -241,11 +241,10 @@ void housesensor_db_json (char *buffer, int size) {
                 snprintf (buffer+length, size-length, ",\"value\":null}");
             } else if (s->unit[0]) {
                 snprintf (buffer+length, size-length,
-                          ",\"value\":%s,\"unit\":\"%s\"}",
-                          s->name, s->value, s->unit);
+                          ",\"value\":%s,\"unit\":\"%s\"}", s->value, s->unit);
             } else {
                 snprintf (buffer+length, size-length, 
-                          ",\"value\":\"%s\"}", s->name, s->value);
+                          ",\"value\":\"%s\"}", s->value);
             }
             length += strlen(buffer+length);
         }
