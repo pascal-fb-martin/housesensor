@@ -67,15 +67,22 @@ static void ReadDevice (const char *id) {
                         }
                     }
                     strncpy(value, p+3, sizeof(value));
-                    p = value + strlen(value)-3;
-                    p[4] = 0;
-                    p[3] = p[2];
-                    p[2] = p[1];
-                    p[1] = p[0];
-                    p[0] = '.';
-                    p = value + strlen(value);
-                    while (*(--p) == '0') *p = 0;
-                    housesensor_db_set ("w1", id, value, "Celsius");
+
+                    // 85000 and 127937 are two known "error values" that
+                    // seem to be related to a chip reset (power issue?).
+                    // Ignore either one.
+                    //
+                    if (strcmp (value, "85000") && strcmp (value, "127937")) {
+                        p = value + strlen(value)-3;
+                        p[4] = 0;
+                        p[3] = p[2];
+                        p[2] = p[1];
+                        p[1] = p[0];
+                        p[0] = '.';
+                        p = value + strlen(value);
+                        while (*(--p) == '0') *p = 0;
+                        housesensor_db_set ("w1", id, value, "Celsius");
+                    }
                 }
             }
         }
