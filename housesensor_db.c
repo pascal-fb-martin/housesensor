@@ -89,8 +89,9 @@ static int SensorOptionCount = 0;
 static const char SensorLogName[] = "/dev/shm/housesensor.log";
 static FILE *SensorLog = 0;
 static time_t SensorLogLastWrite = 0;
-static const char SensorMoveFormat[] =
-   "mv /dev/shm/housesensor.log /var/lib/house/sensor-%04d-%02d-%02d.log";
+static time_t SensorLogLastMove = 0;
+static const char SensorArchiveFormat[] =
+                     "/var/lib/house/sensor-%04d-%02d-%02d.log";
 
 
 static void DecodeLine (char *buffer) {
@@ -296,8 +297,6 @@ void housesensor_db_json (char *buffer, int size) {
 
 void housesensor_db_background (time_t now) {
 
-    static time_t LastMove = 0;
-
     struct tm *t;
     time_t yesterday = now - 3600;
 
@@ -307,18 +306,23 @@ void housesensor_db_background (time_t now) {
         SensorLog = 0;
 
         t = localtime (&yesterday);
-        if (t->tm_hour == 23 && now > LastMove + 7200) {
+        if (t->tm_hour == 23 && now > SensorLogLastMove + 3601) {
+            char archivename[256];
             char command[1024];
-            snprintf (command, sizeof(command), SensorMoveFormat,
+            snprintf (archivename, sizeof(archivename), SensorArchiveFormat,
                       t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+            snprintf (command, sizeof(command), "cat %s >> %s ; rm %s",
+                      SensorLogName, archivename, SensorLogName);
             system (command);
-            LastMove = now;
+            SensorLogLastMove = now;
         }
     }
 }
 
 void housesensor_db_initialize (int argc, const char **argv) {
 
+    struct tm *t;
+    time_t yesterday = time(0) - 3600;
     const char *config = "/etc/house/sensor.config";
 
     int i;
@@ -327,5 +331,21 @@ void housesensor_db_initialize (int argc, const char **argv) {
     }
 
     LoadConfig (config);
+
+    // If we start at midnight, and yesterday's log already exists,
+    // do not re-archive today's data as if it was yesterday's.
+    //
+    t = localtime (&yesterday);
+    if (t->tm_hour == 23) {
+        FILE *f;
+        char name[1024];
+        snprintf (name, sizeof(name), SensorArchiveFormat,
+                  t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+        f = fopen(name, "r");
+        if (f) {
+            SensorLogLastMove = yesterday + 3600;
+            fclose(f);
+        }
+    }
 }
 

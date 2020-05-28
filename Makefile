@@ -41,5 +41,9 @@ install:
 uninstall:
 	systemctl stop housesensor
 	systemctl disable housesensor
+	rm -f /usr/local/bin/housesensor /etc/init.d/housesensor
 	systemctl daemon-reload
+
+purge: uninstall
+	rm -rf /etc/house/sensor.config /etc/default/housesensor
 

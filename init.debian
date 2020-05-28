@@ -29,6 +29,7 @@ fi
 case $1 in
 	start)
 		log_daemon_msg "Starting HouseSensor server" "housesensor"
+		if [ -e /var/lib/house/housesensor.log ] ; then mv /var/lib/house/housesensor.log /dev/shm/housesensor.log ; fi
 		start-stop-daemon --start --quiet --oknodo --background --pidfile $PIDFILE --make-pidfile --startas $DAEMON -- $HTTP_OPTS $OTHER_OPTS
 		log_end_msg $?
   		;;
@@ -37,6 +38,7 @@ case $1 in
 		start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE --retry=TERM/30/KILL/5 --exec $DAEMON
 		log_end_msg $?
 		rm -f $PIDFILE
+		if [ -e /dev/shm/housesensor.log ] ; then mv /dev/shm/housesensor.log /var/lib/house/housesensor.log ; fi
   		;;
 	restart|force-reload)
 		$0 stop && sleep 2 && $0 start
