@@ -75,12 +75,13 @@ typedef struct {
     char *value;
 } SensorOption;
 
-#define SENSOR_DATABASE_SIZE 1024
-static SensorContext SensorDatabase[SENSOR_DATABASE_SIZE];
+#define SENSOR_DATABASE_BLOCK 64
+static SensorContext *SensorDatabase = 0;
+static int SensorDatabaseSize = 0;
 static int SensorCount = 0;
 static int SensorDriverCursor = 0;
 
-static SensorLocation SensorLocationDatabase[SENSOR_DATABASE_SIZE];
+static SensorLocation SensorLocationDatabase[SENSOR_DATABASE_BLOCK];
 static int SensorLocationCount = 0;
 
 static SensorOption SensorOptionDatabase[128];
@@ -94,13 +95,10 @@ static const char SensorArchiveFormat[] =
                      "/var/lib/house/sensor-%04d-%02d-%02d.log";
 
 
-static void DecodeLine (char *buffer) {
+static int LineSplit (char *buffer, char **token, int max) {
 
     int i, start, count;
 
-    char *token[16];
-
-    // Split the line
     for (i = start = count = 0; buffer[i] >= ' '; ++i) {
         if (buffer[i] == ' ') {
             if (count >= 16) {
@@ -116,41 +114,79 @@ static void DecodeLine (char *buffer) {
     }
     buffer[i] = 0;
     token[count++] = buffer + start;
+    return count;
+}
 
-    if (count >= 3 && strcmp(token[0],"OPTION") == 0) {
-        SensorOption *o = SensorOptionDatabase + SensorOptionCount++;
-        o->name = strdup(token[1]);
-        o->value = strdup(token[2]);
+static void AddOption (char **token, int count) {
+    SensorOption *o = SensorOptionDatabase + SensorOptionCount++;
+    o->name = strdup(token[1]);
+    o->value = strdup(token[2]);
+}
+
+static void AddSensor (char **token, int count) {
+
+    int i;
+    SensorContext *s = SensorDatabase + SensorCount++;
+
+    if (SensorCount > SensorDatabaseSize) {
+        SensorDatabaseSize += SENSOR_DATABASE_BLOCK;
+        SensorDatabase =
+            realloc (SensorDatabase, sizeof(SensorContext)*SensorDatabaseSize);
+        s = SensorDatabase + SensorCount - 1;
+    }
+
+    s->driver = strdup(token[0]);
+    s->device = strdup(token[1]);
+    s->location = strdup(token[2]);
+    s->name = strdup(token[3]);
+    if (count >= 5)
+        strncpy (s->unit, token[4], sizeof(s->unit));
+    else
+        s->unit[0] = 0;
+    s->value[0] = 0;
+    s->timestamp = 0;
+    for (i = 0; i < SensorLocationCount; ++i) {
+        if (strcmp(SensorLocationDatabase[i].location, s->location) == 0)
+            break;
+    }
+    if (i >= SensorLocationCount) {
+        SensorLocation *l = SensorLocationDatabase + SensorLocationCount++;
+        if (SensorLocationCount > SENSOR_DATABASE_BLOCK) {
+            fprintf (stderr, "Too many locations\n");
+            exit (1);
+        }
+        l->location = s->location;
+        l->first = SensorCount - 1;
+        s->next = -1;
+    } else {
+        SensorLocation *l = SensorLocationDatabase + i;
+        s->next = l->first;
+        l->first = SensorCount - 1;
+    }
+}
+
+static void DecodeLine (char *buffer) {
+
+    int count;
+    char *token[16];
+
+    count = LineSplit (buffer, token, 16);
+    if (count < 1) return;
+
+    if (strcmp(token[0],"OPTION") == 0) {
+        if (count < 3) {
+            fprintf (stderr, "invalid option line (too few items)\n");
+            return;
+        }
+        AddOption (token, count);
         return;
     }
 
-    if (count >= 4 && SensorCount < SENSOR_DATABASE_SIZE) {
-        SensorContext *s = SensorDatabase + SensorCount++;
-        s->driver = strdup(token[0]);
-        s->device = strdup(token[1]);
-        s->location = strdup(token[2]);
-        s->name = strdup(token[3]);
-        if (count >= 5)
-            strncpy (s->unit, token[4], sizeof(s->unit));
-        else
-            s->unit[0] = 0;
-        s->value[0] = 0;
-        s->timestamp = 0;
-        for (i = 0; i < SensorLocationCount; ++i) {
-            if (strcmp(SensorLocationDatabase[i].location, s->location) == 0)
-                break;
-        }
-        if (i >= SensorLocationCount) {
-            SensorLocation *l = SensorLocationDatabase + SensorLocationCount++;
-            l->location = s->location;
-            l->first = SensorCount - 1;
-            s->next = -1;
-        } else {
-            SensorLocation *l = SensorLocationDatabase + i;
-            s->next = l->first;
-            l->first = SensorCount - 1;
-        }
+    if (count < 4) {
+        fprintf (stderr, "invalid sensor line (too few item)\n");
+        return;
     }
+    AddSensor (token, count);
 }
 
 static void LoadConfig (const char *name) {
@@ -199,6 +235,8 @@ void housesensor_db_set (const char *driver, const char *device,
     time_t now = time(0);
     SensorContext *s;
 
+    // Search for that exact sensor.
+    //
     for (i = 0; i < SensorCount; ++i) {
         s = SensorDatabase + i;
         if (strcmp (s->device, device)) continue;
