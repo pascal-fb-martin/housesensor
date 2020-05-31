@@ -26,10 +26,14 @@ if [ -r /etc/default/housesensor ]; then
 fi
 
 
+# This version supports the obsolete HouseSensor log file names, to allow
+# for a transition without losing data.
+
 case $1 in
 	start)
 		log_daemon_msg "Starting HouseSensor server" "housesensor"
-		if [ -e /var/lib/house/housesensor.log ] ; then mv /var/lib/house/housesensor.log /dev/shm/housesensor.log ; fi
+		if [ -e /var/lib/house/housesensor.log ] ; then mv /var/lib/house/housesensor.log /dev/shm/housesensor.csv ; fi
+		if [ -e /var/lib/house/sensor/housesensor.csv ] ; then mv /var/lib/house/sensor/housesensor.csv /dev/shm ; fi
 		start-stop-daemon --start --quiet --oknodo --background --pidfile $PIDFILE --make-pidfile --startas $DAEMON -- $HTTP_OPTS $OTHER_OPTS
 		log_end_msg $?
   		;;
@@ -38,7 +42,9 @@ case $1 in
 		start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE --retry=TERM/30/KILL/5 --exec $DAEMON
 		log_end_msg $?
 		rm -f $PIDFILE
-		if [ -e /dev/shm/housesensor.log ] ; then mv /dev/shm/housesensor.log /var/lib/house/housesensor.log ; fi
+		if [ -e /dev/shm/housesensor.log ] ; then mv /dev/shm/housesensor.log /var/lib/house/sensor/housesensor.csv ; fi
+		if [ -e /dev/shm/housesensor.csv ] ; then mv /dev/shm/housesensor.csv /var/lib/house/sensor ; fi
+		rm -f /var/lib/house/housesensor.log
   		;;
 	restart|force-reload)
 		$0 stop && sleep 2 && $0 start

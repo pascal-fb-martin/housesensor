@@ -25,7 +25,8 @@ package:
 install:
 	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; fi
 	mkdir -p /usr/local/bin
-	mkdir -p /var/lib/house
+	mkdir -p /var/lib/house/sensor
+	for i in /var/lib/house/sensor-*.log ; do ; b=`basename $i` ; j=`expr substr $b 8 10` ; mv $i /var/lib/house/sensor/$j.csv ; done
 	rm -f /usr/local/bin/housesensor /etc/init.d/housesensor
 	cp housesensor /usr/local/bin
 	cp init.debian /etc/init.d/housesensor
@@ -45,5 +46,5 @@ uninstall:
 	systemctl daemon-reload
 
 purge: uninstall
-	rm -rf /etc/house/sensor.config /etc/default/housesensor
+	rm -rf /etc/house/sensor.config /etc/default/housesensor /var/lib/house/sensor
 

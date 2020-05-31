@@ -32,7 +32,16 @@ For 1-Wire devices, the device is the 1-Wire ID of the sensor, e.g. 28-01162bdbf
 
 The location is an arbitrary user name, which is used to organize the sensors in groups. The name is the name of the sensor as reported to the outside.
 
-A unit can be specified to accomodate sensors that have no intrinsic unit.
+A unit can be specified to accommodate sensors that have no intrinsic unit.
 
-The program also records all measurements. The recording is accumulated each day in /dev/shm/housesensor.log (i.e. in RAM) and copied each day to /var/lib/house as sensor-YYYY-MM-DD.log, where YYYY, MM and DD represents the current day.
+The program also records all measurements. The recording is accumulated each day in /dev/shm/housesensor.csv (i.e. in RAM) and moved at the end of the day to /var/lib/house/sensor as YYYY-MM-DD.csv, where YYYY, MM and DD represents the day of the recording.
+
+If the HouseSensor service is stopped, /dev/shm/housesensor.csv is moved to /var/lib/house/sensor/housesensor.csv. The same file is also copied hourly to /var/lib/house/sensor/housesensor.csv. When the service is restarted, /var/lib/house/sensor/housesensor.csv is moved back to /dev/shm. This saves the recorded data when the OS reboots. However a system crash could cause up to one hour worth of recordings to be lost. This is a tradeoff to avoid wearing out a SD card or USB drive by rewriting the same block every minute or so.
+
+The format of the recording is comma-separated variables, where each line represents one sensor measurement with fields in the following order:
+* Timestamp (system time).
+* Location of sensor (unquoted string).
+* Name of sensor (unquoted string).
+* Value (numeric or unquoted string).
+* Unit (unquoted string).
 

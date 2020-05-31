@@ -43,7 +43,7 @@ static void hs_help (const char *argv0) {
     int i = 1;
     const char *help;
 
-    printf ("%s [-h] [-debug] [-test]%s\n", argv0, echttp_help(0));
+    printf ("%s [-h]%s\n", argv0, echttp_help(0));
 
     printf ("\nGeneral options:\n");
     printf ("   -h:              print this help.\n");
@@ -57,12 +57,21 @@ static void hs_help (const char *argv0) {
     exit (0);
 }
 
-static const char *hs_sensor_json (const char *method, const char *uri,
-                                   const char *data, int length) {
+static const char *hs_sensor_current (const char *method, const char *uri,
+                                      const char *data, int length) {
     static char buffer[65537];
 
     echttp_content_type_json ();
-    housesensor_db_json(buffer, sizeof(buffer));
+    housesensor_db_latest(buffer, sizeof(buffer));
+    return buffer;
+}
+
+static const char *hs_sensor_history (const char *method, const char *uri,
+                                      const char *data, int length) {
+    static char buffer[65537];
+
+    echttp_content_type_json ();
+    housesensor_db_history(buffer, sizeof(buffer));
     return buffer;
 }
 
@@ -100,18 +109,22 @@ int main (int argc, const char **argv) {
         if (echttp_option_present("-h", argv[i])) {
             hs_help(argv[0]);
         }
-        if (echttp_option_present ("-http-service=dynamic", argv[i])) {
-            houseportal_initialize (argc, argv);
-            use_houseportal = 1;
-        }
     }
 
     housesensor_db_initialize (argc, argv);
     housesensor_w1_initialize (argc, argv);
 
     echttp_open (argc, argv);
-    echttp_route_uri ("/sensor/current", hs_sensor_json);
-    echttp_static_route ("/", "/usr/share/house/public");
+    if (echttp_dynamic_port()) {
+        houseportal_initialize (argc, argv);
+        use_houseportal = 1;
+    }
+    echttp_route_uri ("/sensor/current", hs_sensor_current);
+    echttp_route_uri ("/sensor/history", hs_sensor_history);
+    echttp_static_route ("/sensor/records", "/var/lib/house/sensor");
+    echttp_static_route ("/sensor", "/usr/share/house/public");
+    if (!use_houseportal)
+        echttp_static_route ("/", "/usr/share/house/public");
     echttp_background (&hs_background);
     echttp_loop();
 }

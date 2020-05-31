@@ -40,15 +40,22 @@
  *
  *    Get the value for the specified option.
  *
- * const char *housesensor_db_json (char *buffer, int size);
+ * void housesensor_db_latest (char *buffer, int size);
  *
  *    Get a complete list of latest measurement in JSON format.
+ *
+ * void housesensor_db_history (char *buffer, int size);
+ *
+ *    Get a list of the days for which history is available.
+ *    (We do not return the whole history: that could be huge.)
  *
  * void housesensor_db_background (time_t now);
  *
  *    This background function performs some cleanup and must be
  *    called periodically.
  */
+
+#include <dirent.h>
 
 #include "housesensor.h"
 #include "housesensor_db.h"
@@ -87,12 +94,12 @@ static int SensorLocationCount = 0;
 static SensorOption SensorOptionDatabase[128];
 static int SensorOptionCount = 0;
 
-static const char SensorLogName[] = "/dev/shm/housesensor.log";
+static const char SensorLogName[] = "/dev/shm/housesensor.csv";
 static FILE *SensorLog = 0;
 static time_t SensorLogLastWrite = 0;
 static time_t SensorLogLastMove = 0;
-static const char SensorArchiveFormat[] =
-                     "/var/lib/house/sensor-%04d-%02d-%02d.log";
+static const char SensorArchiveDir[] = "/var/lib/house/sensor";
+static const char SensorArchiveFormat[] = "%04d-%02d-%02d.csv";
 
 
 static int LineSplit (char *buffer, char **token, int max) {
@@ -280,7 +287,7 @@ const char *housesensor_db_option (const char *name) {
     return 0;
 }
 
-void housesensor_db_json (char *buffer, int size) {
+void housesensor_db_latest (char *buffer, int size) {
 
     char host[256];
     int length;
@@ -333,26 +340,68 @@ void housesensor_db_json (char *buffer, int size) {
     snprintf (buffer+length, size-length, "}}");
 }
 
+void housesensor_db_history (char *buffer, int size) {
+
+    DIR *d = opendir (SensorArchiveDir);
+
+    buffer[0] = 0;
+    if (d) {
+        int length;
+        struct dirent *de;
+        const char *prefix = "";
+
+        snprintf (buffer, size,
+                  "{\"sensor\":{\"timestamp\":%d,\"history\":[", time(0));
+        length = strlen(buffer);
+
+        while (de = readdir(d)) {
+            snprintf (buffer+length, size-length,
+                      "%s\"%10.10s\"", prefix, de->d_name);
+            length += strlen(buffer+length);
+            prefix = ",";
+        }
+        snprintf (buffer+length, size-length, "]}}");
+        closedir(d);
+    }
+}
+
+static void housesensor_db_backup (const struct tm *t, const char *method) {
+
+    char archivename[256];
+    char command[1024];
+
+    snprintf (archivename, sizeof(archivename), SensorArchiveFormat,
+              t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+
+    snprintf (command, sizeof(command), "%s %s %s/%s",
+              method, SensorLogName, SensorArchiveDir, archivename);
+
+    system (command);
+}
+
 void housesensor_db_background (time_t now) {
 
+    static time_t LastHourlyBackup = 0;
+
     struct tm *t;
-    time_t yesterday = now - 3600;
+    time_t onehourbefore = now - 3600;
 
     if (SensorLog && now > SensorLogLastWrite + 10) {
 
         fclose (SensorLog);
         SensorLog = 0;
 
-        t = localtime (&yesterday);
+        t = localtime (&onehourbefore);
+
         if (t->tm_hour == 23 && now > SensorLogLastMove + 3601) {
-            char archivename[256];
-            char command[1024];
-            snprintf (archivename, sizeof(archivename), SensorArchiveFormat,
-                      t->tm_year+1900, t->tm_mon+1, t->tm_mday);
-            snprintf (command, sizeof(command), "cat %s >> %s ; rm %s",
-                      SensorLogName, archivename, SensorLogName);
-            system (command);
-            SensorLogLastMove = now;
+
+            housesensor_db_backup (t, "mv");
+            SensorLogLastMove = LastHourlyBackup = now;
+
+        } else if (onehourbefore > LastHourlyBackup) {
+
+            housesensor_db_backup (localtime (&now), "cp");
+            LastHourlyBackup = now;
         }
     }
 }
