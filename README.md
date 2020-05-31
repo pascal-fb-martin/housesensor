@@ -1,18 +1,18 @@
 # HouseSensor - A Small Web Server to Access Physical Sensors
 
-# Overview
+## Overview
 
 This project provides a small web server that reports the latest values from local sensors. This project depends on [echttp](https://github.com/pascal-fb-martin/echttp) and [HousePortal](https://github.com/pascal-fb-martin/houseportal).
 
 The original goal was to read temperature sensors from 1-wire DS18x20 devices.
 
-# Installation
+## Installation
 
 * Clone this GitHub repository.
 * make
 * sudo make install
 
-# Configuration
+## Configuration
 
 The list of sensors to scan is defined in file /etc/house/sensor.config.
 
@@ -34,11 +34,13 @@ The location is an arbitrary user name, which is used to organize the sensors in
 
 A unit can be specified to accommodate sensors that have no intrinsic unit.
 
-# Historical Recording
+## Historical Recording
 
 The program records all measurements. The recordings are accumulated each day in /dev/shm/housesensor.csv (i.e. in RAM) and moved at the end of the day to /var/lib/house/sensor as YYYY-MM-DD.csv, where YYYY, MM and DD represents the day of the recording.
 
-If the HouseSensor service is stopped, /dev/shm/housesensor.csv is moved to /var/lib/house/sensor/housesensor.csv. The same file is also copied hourly to /var/lib/house/sensor/housesensor.csv. When the service is restarted, /var/lib/house/sensor/housesensor.csv is moved back to /dev/shm. This saves the recorded data when the OS reboots. However a system crash could cause up to one hour worth of recordings to be lost. This is a tradeoff to avoid wearing out a SD card or USB drive by rewriting the same block every minute or so.
+If the HouseSensor service is stopped, /dev/shm/housesensor.csv is moved to /var/lib/house/sensor/housesensor.csv. The same file is also copied hourly to /var/lib/house/sensor/housesensor.csv.
+
+When the service is restarted, /var/lib/house/sensor/housesensor.csv is moved back to /dev/shm. This restores the recorded data when the OS reboots. However a system crash could cause up to one hour worth of recordings to be lost. This is a tradeoff to avoid wearing out a SD card or USB drive by rewriting the same block every minute or so.
 
 The format of the recording is comma-separated variables, where each line represents one sensor measurement with fields in the following order:
 * Timestamp (system time).
