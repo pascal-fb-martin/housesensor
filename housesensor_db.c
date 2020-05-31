@@ -355,6 +355,7 @@ void housesensor_db_history (char *buffer, int size) {
         length = strlen(buffer);
 
         while (de = readdir(d)) {
+            if (de->d_name[0] == '.') continue;
             snprintf (buffer+length, size-length,
                       "%s\"%10.10s\"", prefix, de->d_name);
             length += strlen(buffer+length);
