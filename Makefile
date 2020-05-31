@@ -18,15 +18,11 @@ rebuild: clean all
 housesensor: $(OBJS)
 	gcc -g -O -o housesensor $(OBJS) -lhouseportal -lechttp -lcrypto -lrt
 
-package:
-	mkdir -p packages
-	tar -cf packages/housesensor-`date +%F`.tgz housesensor init.debian Makefile
-
 install:
 	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; fi
 	mkdir -p /usr/local/bin
 	mkdir -p /var/lib/house/sensor
-	for i in /var/lib/house/sensor-*.log ; do ; b=`basename $i` ; j=`expr substr $b 8 10` ; mv $i /var/lib/house/sensor/$j.csv ; done
+	for i in /var/lib/house/sensor-*.log ; do b=`basename $$i` ; j=`expr substr $$b 8 10` ; mv $$i /var/lib/house/sensor/$$j.csv ; done
 	rm -f /usr/local/bin/housesensor /etc/init.d/housesensor
 	cp housesensor /usr/local/bin
 	cp init.debian /etc/init.d/housesensor
