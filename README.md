@@ -34,7 +34,9 @@ The location is an arbitrary user name, which is used to organize the sensors in
 
 A unit can be specified to accommodate sensors that have no intrinsic unit.
 
-The program also records all measurements. The recording is accumulated each day in /dev/shm/housesensor.csv (i.e. in RAM) and moved at the end of the day to /var/lib/house/sensor as YYYY-MM-DD.csv, where YYYY, MM and DD represents the day of the recording.
+# Historical Recording
+
+The program records all measurements. The recordings are accumulated each day in /dev/shm/housesensor.csv (i.e. in RAM) and moved at the end of the day to /var/lib/house/sensor as YYYY-MM-DD.csv, where YYYY, MM and DD represents the day of the recording.
 
 If the HouseSensor service is stopped, /dev/shm/housesensor.csv is moved to /var/lib/house/sensor/housesensor.csv. The same file is also copied hourly to /var/lib/house/sensor/housesensor.csv. When the service is restarted, /var/lib/house/sensor/housesensor.csv is moved back to /dev/shm. This saves the recorded data when the OS reboots. However a system crash could cause up to one hour worth of recordings to be lost. This is a tradeoff to avoid wearing out a SD card or USB drive by rewriting the same block every minute or so.
 
