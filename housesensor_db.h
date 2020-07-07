@@ -27,8 +27,9 @@ const char *housesensor_db_device_first (const char *driver);
 const char *housesensor_db_device_next (const char *driver);
 const char *housesensor_db_option (const char *name);
 
-void housesensor_db_latest (char *buffer, int size);
-void housesensor_db_history (char *buffer, int size);
+const char *housesensor_db_latest (void);
+const char *housesensor_db_recent (void);
+const char *housesensor_db_history (void);
 
 void housesensor_db_background (time_t now);
 

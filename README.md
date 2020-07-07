@@ -37,6 +37,26 @@ The location is an arbitrary user name, which is used to organize the sensors in
 
 A unit can be specified to accommodate sensors that have no intrinsic unit.
 
+## Web API
+
+The application supports the following web requests:
+```
+/sensor/current
+```
+Return JSON data that provides the latest value for each sensor.
+```
+/sensor/recent
+```
+Return JSON data that gives a list of the N most recent measurements. Each measurement comes with its own individual timestamp.
+```
+/sensor/history
+```
+Return JSON data that list all available historical files (see below).
+```
+/sensor/records/{file}
+```
+Download one historical file (in CSV format: see below).
+
 ## Historical Recording
 
 The program records all measurements. The recordings are accumulated each day in /dev/shm/housesensor.csv (i.e. in RAM) and moved at the end of the day to /var/lib/house/sensor as YYYY-MM-DD.csv, where YYYY, MM and DD represents the day of the recording.

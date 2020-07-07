@@ -20,8 +20,6 @@
  *
  * housesensor.c - Main loop of the housesensor program.
  *
- * SYNOPSYS:
- *
  */
 
 #include <sys/types.h>
@@ -57,22 +55,25 @@ static void hs_help (const char *argv0) {
     exit (0);
 }
 
-static const char *hs_sensor_current (const char *method, const char *uri,
-                                      const char *data, int length) {
-    static char buffer[65537];
+static const char *hs_sensor_status (const char *method, const char *uri,
+                                     const char *data, int length) {
 
     echttp_content_type_json ();
-    housesensor_db_latest(buffer, sizeof(buffer));
-    return buffer;
+    return housesensor_db_latest();
+}
+
+static const char *hs_sensor_recent (const char *method, const char *uri,
+                                     const char *data, int length) {
+
+    echttp_content_type_json ();
+    return housesensor_db_recent();
 }
 
 static const char *hs_sensor_history (const char *method, const char *uri,
                                       const char *data, int length) {
-    static char buffer[65537];
 
     echttp_content_type_json ();
-    housesensor_db_history(buffer, sizeof(buffer));
-    return buffer;
+    return housesensor_db_history();
 }
 
 static void hs_background (int fd, int mode) {
@@ -119,10 +120,11 @@ int main (int argc, const char **argv) {
         houseportal_initialize (argc, argv);
         use_houseportal = 1;
     }
-    echttp_route_uri ("/sensor/current", hs_sensor_current);
+    echttp_route_uri ("/sensor/status", hs_sensor_status);
+    echttp_route_uri ("/sensor/recent", hs_sensor_recent);
     echttp_route_uri ("/sensor/history", hs_sensor_history);
     echttp_static_route ("/sensor/records", "/var/lib/house/sensor");
-    echttp_static_route ("/sensor", "/usr/share/house/public");
+    echttp_static_route ("/sensor", "/usr/share/house/public/sensor");
     if (!use_houseportal)
         echttp_static_route ("/", "/usr/share/house/public");
     echttp_background (&hs_background);

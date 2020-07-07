@@ -20,7 +20,7 @@
  *
  * housesensor_db.c - The database of sensors.
  *
- * SYNOPSYS:
+ * SYNOPSIS:
  *
  * void housesensor_db_initialize (int argc, const char **argv);
  *
@@ -40,11 +40,15 @@
  *
  *    Get the value for the specified option.
  *
- * void housesensor_db_latest (char *buffer, int size);
+ * const char *housesensor_db_latest (void);
  *
- *    Get a complete list of latest measurement in JSON format.
+ *    Get a complete list of latest measurements in JSON format.
  *
- * void housesensor_db_history (char *buffer, int size);
+ * const char *housesensor_db_recent (void);
+ *
+ *    Get a list of the N most recent measurements in JSON format.
+ *
+ * const char *housesensor_db_history (void);
  *
  *    Get a list of the days for which history is available.
  *    (We do not return the whole history: that could be huge.)
@@ -82,6 +86,12 @@ typedef struct {
     char *value;
 } SensorOption;
 
+typedef struct {
+    SensorContext *sensor;
+    time_t timestamp;
+    char *value;
+} SensorEvent;
+
 #define SENSOR_DATABASE_BLOCK 64
 static SensorContext *SensorDatabase = 0;
 static int SensorDatabaseSize = 0;
@@ -100,6 +110,25 @@ static time_t SensorLogLastWrite = 0;
 static time_t SensorLogLastMove = 0;
 static const char SensorArchiveDir[] = "/var/lib/house/sensor";
 static const char SensorArchiveFormat[] = "%04d-%02d-%02d.csv";
+
+#define SENSOR_EVENT_DEPTH (SENSOR_DATABASE_BLOCK*128)
+
+SensorEvent SensorEventLog[SENSOR_EVENT_DEPTH];
+int SensorEventCursor = 0;
+
+
+static void SensorEventAdd (SensorContext *sensor) {
+
+    SensorEvent *evt = SensorEventLog + SensorEventCursor;
+    evt->sensor = sensor;
+    evt->timestamp = sensor->timestamp;
+    if (evt->value) free (evt->value);
+    evt->value = strdup(sensor->value);
+
+    SensorEventCursor += 1;
+    if (SensorEventCursor >= SENSOR_EVENT_DEPTH) SensorEventCursor = 0;
+    SensorEventLog[SensorEventCursor].sensor = 0;
+}
 
 
 static int LineSplit (char *buffer, char **token, int max) {
@@ -271,6 +300,7 @@ void housesensor_db_set (const char *driver, const char *device,
                      (long)now, s->location, s->name, value, s->unit);
             SensorLogLastWrite = now;
         }
+        SensorEventAdd (s);
     }
 }
 
@@ -287,14 +317,16 @@ const char *housesensor_db_option (const char *name) {
     return 0;
 }
 
-void housesensor_db_latest (char *buffer, int size) {
+const char *housesensor_db_latest (void) {
+
+    static char buffer[65537];
 
     char host[256];
     int length;
     int i, j;
 
     gethostname (host, sizeof(host));
-    snprintf (buffer, size,
+    snprintf (buffer, sizeof(buffer),
              "{\"sensor\":{\"timestamp\":%ld, \"host\":\"%s\"",
              (long)time(0), host);
     length = strlen(buffer);
@@ -303,7 +335,7 @@ void housesensor_db_latest (char *buffer, int size) {
 
         const char *prefix = "";
 
-        snprintf (buffer+length, size-length,
+        snprintf (buffer+length, sizeof(buffer)-length,
                  ",\"%s\":[", SensorLocationDatabase[j].location);
         length += strlen(buffer+length);
 
@@ -312,58 +344,117 @@ void housesensor_db_latest (char *buffer, int size) {
 
             SensorContext *s = SensorDatabase + i;
 
-            snprintf (buffer+length, size-length,
+            snprintf (buffer+length, sizeof(buffer)-length,
                       "%s{\"name\":\"%s\"", prefix, s->name);
             length += strlen(buffer+length);
             prefix = ",";
 
             if (s->timestamp) {
-                snprintf (buffer+length, size-length,
+                snprintf (buffer+length, sizeof(buffer)-length,
                           ",\"timestamp\":%ld", (long) s->timestamp);
                 length += strlen(buffer+length);
             }
 
             if (s->value[0] == 0) {
-                snprintf (buffer+length, size-length, ",\"value\":null}");
+                snprintf (buffer+length, sizeof(buffer)-length,
+                          ",\"value\":null}");
             } else if (s->unit[0]) {
-                snprintf (buffer+length, size-length,
+                snprintf (buffer+length, sizeof(buffer)-length,
                           ",\"value\":%s,\"unit\":\"%s\"}", s->value, s->unit);
             } else {
-                snprintf (buffer+length, size-length, 
+                snprintf (buffer+length, sizeof(buffer)-length, 
                           ",\"value\":\"%s\"}", s->value);
             }
             length += strlen(buffer+length);
         }
-        snprintf (buffer+length, size-length, "]");
+        snprintf (buffer+length, sizeof(buffer)-length, "]");
         length += strlen(buffer+length);
     }
-    snprintf (buffer+length, size-length, "}}");
+    snprintf (buffer+length, sizeof(buffer)-length, "}}");
+    return buffer;
 }
 
-void housesensor_db_history (char *buffer, int size) {
+const char *housesensor_db_recent (void) {
+
+    static char buffer[SENSOR_EVENT_DEPTH*64];
+    const char *prefix = "";
+    char host[256];
+    int length;
+    int i;
+
+    gethostname (host, sizeof(host));
+
+    snprintf (buffer, sizeof(buffer),
+              "{\"sensor\":{\"timestamp\":%d,\"host\":\"%s\",\"recent\":[",
+              time(0), host);
+    length = strlen(buffer);
+
+    for (i = SensorEventCursor + 1; i != SensorEventCursor; ++i) {
+        if (i >= SENSOR_EVENT_DEPTH) {
+            i = 0;
+            if (!SensorEventCursor) break;
+        }
+        SensorContext *s = SensorEventLog[i].sensor;
+        if (s) {
+
+            const char *value = SensorEventLog[i].value;
+            time_t timestamp = SensorEventLog[i].timestamp;
+
+            snprintf (buffer+length, sizeof(buffer)-length,
+                      "%s{\"location\":\"%s\",\"name\":\"%s\",\"time\":%ld",
+                      prefix, s->location, s->name, timestamp);
+            length += strlen(buffer+length);
+            prefix = ",";
+
+            if (s->unit[0]) {
+                snprintf (buffer+length, sizeof(buffer)-length,
+                          ",\"value\":%s,\"unit\":\"%s\"}", value, s->unit);
+            } else {
+                snprintf (buffer+length, sizeof(buffer)-length, 
+                          ",\"value\":\"%s\"}", value);
+            }
+            length += strlen(buffer+length);
+        }
+    }
+    snprintf (buffer+length, sizeof(buffer)-length, "]}}");
+    return buffer;
+}
+
+const char *housesensor_db_history (void) {
+
+    static char buffer[65537];
 
     DIR *d = opendir (SensorArchiveDir);
+    char host[256];
 
-    buffer[0] = 0;
+    gethostname (host, sizeof(host));
+
     if (d) {
         int length;
         struct dirent *de;
         const char *prefix = "";
 
-        snprintf (buffer, size,
-                  "{\"sensor\":{\"timestamp\":%d,\"history\":[", time(0));
+        snprintf (buffer, sizeof(buffer),
+                  "{\"sensor\":{\"timestamp\":%d,\"host\":\"%s\",\"history\":[",
+                  time(0), host);
         length = strlen(buffer);
 
         while (de = readdir(d)) {
             if (de->d_name[0] == '.') continue;
-            snprintf (buffer+length, size-length,
+            snprintf (buffer+length, sizeof(buffer)-length,
                       "%s\"%10.10s\"", prefix, de->d_name);
             length += strlen(buffer+length);
             prefix = ",";
         }
-        snprintf (buffer+length, size-length, "]}}");
+        snprintf (buffer+length, sizeof(buffer)-length, "]}}");
         closedir(d);
+        return buffer;
     }
+
+    snprintf (buffer, sizeof(buffer),
+              "{\"sensor\":{\"timestamp\":%d,\"host\":\"%s\",\"history\":[]}}",
+              time(0), host);
+    return buffer;
 }
 
 static void housesensor_db_backup (const struct tm *t, const char *method) {
