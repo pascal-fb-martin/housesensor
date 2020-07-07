@@ -8,6 +8,9 @@ The original goal was to read temperature sensors from 1-wire DS18x20 devices.
 
 ## Installation
 
+* Install the OpenSSL development package(s).
+* Install [echttp](https://github.com/pascal-fb-martin/echttp).
+* Install [HousePortal](https://github.com/pascal-fb-martin/houseportal).
 * Clone this GitHub repository.
 * make
 * sudo make install
