@@ -115,6 +115,8 @@ int main (int argc, const char **argv) {
     housesensor_db_initialize (argc, argv);
     housesensor_w1_initialize (argc, argv);
 
+    echttp_default ("-http-service=dynamic");
+
     echttp_open (argc, argv);
     if (echttp_dynamic_port()) {
         houseportal_initialize (argc, argv);
@@ -124,9 +126,9 @@ int main (int argc, const char **argv) {
     echttp_route_uri ("/sensor/recent", hs_sensor_recent);
     echttp_route_uri ("/sensor/history", hs_sensor_history);
     echttp_static_route ("/sensor/records", "/var/lib/house/sensor");
-    echttp_static_route ("/sensor", "/usr/share/house/public/sensor");
+    echttp_static_route ("/sensor", "/usr/local/share/house/public/sensor");
     if (!use_houseportal)
-        echttp_static_route ("/", "/usr/share/house/public");
+        echttp_static_route ("/", "/usr/local/share/house/public");
     echttp_background (&hs_background);
     echttp_loop();
 }
