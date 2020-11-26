@@ -85,7 +85,7 @@ static void hs_background (int fd, int mode) {
     housesensor_db_background (now);
 
     if (use_houseportal) {
-        static const char *path[] = {"/sensor"};
+        static const char *path[] = {"sensor:/sensor"};
         if (now >= LastRenewal + 60) {
             if (LastRenewal > 0)
                 houseportal_renew();
