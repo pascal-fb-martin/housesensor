@@ -126,9 +126,7 @@ int main (int argc, const char **argv) {
     echttp_route_uri ("/sensor/recent", hs_sensor_recent);
     echttp_route_uri ("/sensor/history", hs_sensor_history);
     echttp_static_route ("/sensor/records", "/var/lib/house/sensor");
-    echttp_static_route ("/sensor", "/usr/local/share/house/public/sensor");
-    if (!use_houseportal)
-        echttp_static_route ("/", "/usr/local/share/house/public");
+    echttp_static_route ("/", "/usr/local/share/house/public");
     echttp_background (&hs_background);
     echttp_loop();
 }

@@ -61,6 +61,8 @@
 
 #include <dirent.h>
 
+#include "houseportalclient.h"
+
 #include "housesensor.h"
 #include "housesensor_db.h"
 
@@ -321,23 +323,25 @@ const char *housesensor_db_latest (void) {
 
     static char buffer[65537];
 
+    char *prefix0 = "";
     char host[256];
     int length;
     int i, j;
 
     gethostname (host, sizeof(host));
     snprintf (buffer, sizeof(buffer),
-             "{\"sensor\":{\"timestamp\":%ld, \"host\":\"%s\"",
-             (long)time(0), host);
+             "{\"host\":\"%s\",\"proxy\":\"%s\",\"timestamp\":%ld,\"sensor\":{",
+             host, houseportal_server(), (long)time(0));
     length = strlen(buffer);
 
     for (j = 0; j < SensorLocationCount; ++j) {
 
         const char *prefix = "";
 
-        snprintf (buffer+length, sizeof(buffer)-length,
-                 ",\"%s\":[", SensorLocationDatabase[j].location);
+        snprintf (buffer+length, sizeof(buffer)-length, "%s\"%s\":[",
+                  prefix0, SensorLocationDatabase[j].location);
         length += strlen(buffer+length);
+        prefix0 = ",";
 
         for (i = SensorLocationDatabase[j].first;
              i >= 0; i = SensorDatabase[i].next) {
