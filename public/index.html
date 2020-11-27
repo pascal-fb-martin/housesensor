@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel=stylesheet type="text/css" href="/house.css" title="House">
+<script>
+
+var panels = new Array();
+
+function indexUpdate (response) {
+
+    document.getElementsByTagName('title')[0].innerHTML =
+        response.host+' - Sensors';
+
+    document.getElementById('portal').href = 'http://'+response.proxy+'/index.html';
+
+    if (response.sensor) {
+
+        var outertable = document.getElementById('sensors');
+        var locations = Object.entries(response.sensor).sort((a, b) => b[0].localeCompare(a[0]));
+
+        for (const [key, inputs] of locations) {
+
+            if (panels[key]) continue;
+
+            var outerrow = document.createElement('tr');
+            var outercolumn = document.createElement('td');
+            var div = document.createElement('div');
+            div.className = 'housepane';
+            var container = document.createElement ('table');
+            container.className = 'housestatus';
+
+            var innerrow = document.createElement('tr');
+            var innercolumn = document.createElement('td');
+            var label = document.createElement('span');
+            label.innerHTML = key;
+            label.className = 'housetitle';
+            innercolumn.appendChild(label);
+            innerrow.appendChild(innercolumn);
+            container.appendChild(innerrow);
+
+            for (var i = 0; i < inputs.length; ++i) {
+
+                innerrow = document.createElement('tr');
+                innercolumn = document.createElement('td');
+                label = document.createElement('span');
+                label.innerHTML = inputs[i].name+':';
+                innercolumn.appendChild(label);
+                innerrow.appendChild(innercolumn);
+
+                innercolumn = document.createElement('td');
+                label = document.createElement('span');
+                if (inputs[i].value) {
+                    var value = inputs[i].value.toFixed(1);
+                    if (inputs[i].unit) {
+                        label.innerHTML = value+' '+inputs[i].unit;
+                    } else {
+                        label.innerHTML = value;
+                    }
+                } else {
+                    label.innerHTML = '(no value)';
+                }
+                label.className = 'housedata';
+                label.id = 'sensor.'+key+'.'+inputs[i].name;
+                innercolumn.appendChild(label);
+                innerrow.appendChild(innercolumn);
+                container.appendChild(innerrow);
+            }
+            div.appendChild(container);
+            outercolumn.appendChild(div);
+            outerrow.appendChild(outercolumn);
+            outertable.appendChild(outerrow);
+
+            panels[key] = container;
+        }
+
+        for (const [key, inputs] of locations) {
+            for (var i = 0; i < inputs.length; ++i) {
+                var id = 'sensor.'+key+'.'+inputs[i].name;
+                var label = document.getElementById(id);
+                if (!label) continue;
+                if (inputs[i].value) {
+                    var value = inputs[i].value.toFixed(1);
+                    if (inputs[i].unit) {
+                        label.innerHTML = value+' '+inputs[i].unit;
+                    } else {
+                        label.innerHTML = value;
+                    }
+                } else {
+                    label.innerHTML = '(no value)';
+                }
+            }
+        }
+    }
+
+}
+
+function indexInfo () {
+
+    var command = new XMLHttpRequest();
+    command.open("GET", "/sensor/status");
+    command.onreadystatechange = function () {
+        if (command.readyState === 4 && command.status === 200) {
+            indexUpdate(JSON.parse(command.responseText));
+        }
+    }
+    command.send(null);
+}
+
+window.onload = function() {
+   indexInfo();
+   setInterval (indexInfo, 10000);
+}
+</script>
+<title></title>
+</head>
+<body>
+   <table class="housetopcontainer">
+   <tr><td>
+   <table class="housetop">
+   <tr>
+   <td><a id="portal" href="/index.html">Portal</a></td>
+   <td><span>Sensor</span></td>
+   </tr>
+   </table> 
+   </td></tr>
+   </table> 
+   <table class="housepanel" id="sensors">
+   </table> 
+</body>
+</html>
+

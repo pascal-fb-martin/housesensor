@@ -82,7 +82,7 @@ static void ReadDevice (const char *id) {
                         p = value + strlen(value);
                         while (*(--p) == '0') *p = 0;
                         if (*p == '.') *p = 0; // No more fraction.
-                        housesensor_db_set ("w1", id, value, "Celsius");
+                        housesensor_db_set ("w1", id, value, "°C");
                     }
                 }
             }
