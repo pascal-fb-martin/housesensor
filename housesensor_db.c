@@ -170,6 +170,11 @@ static void AddSensor (char **token, int count) {
         SensorDatabaseSize += SENSOR_DATABASE_BLOCK;
         SensorDatabase =
             realloc (SensorDatabase, sizeof(SensorContext)*SensorDatabaseSize);
+        if (!SensorDatabase) {
+            fprintf (stderr,
+                     "No enough memory for %d sensors\n", SensorDatabaseSize);
+            exit (1);
+        }
         s = SensorDatabase + SensorCount - 1;
     }
 
