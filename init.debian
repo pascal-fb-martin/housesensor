@@ -6,7 +6,8 @@
 # Required-Stop:   $network $remote_fs $syslog $houseportal
 # Default-Start:   2 3 4 5
 # Default-Stop: 
-# Short-Description: Start HouseSensor daemon
+# Short-Description: Web access to 1-wire sensors
+# Description: A service that polls attached 1-wire sensors and publish the values through a web API
 ### END INIT INFO
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
