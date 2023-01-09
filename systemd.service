@@ -1,0 +1,12 @@
+[Unit]
+Description=the house sensor data collection service
+After=network-online.target houseportal.service
+
+[Service]
+EnvironmentFile=-/etc/default/housesensor
+EnvironmentFile=-/etc/sysconfig/housesensor
+ExecStart=/usr/local/bin/housesensor $OPTS
+
+[Install]
+WantedBy=multi-user.target
+

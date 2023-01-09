@@ -19,14 +19,16 @@ housesensor: $(OBJS)
 	gcc -g -O -o housesensor $(OBJS) -lhouseportal -lechttp -lssl -lcrypto -lrt
 
 install:
-	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; fi
+	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; systemctl disable housesensor ; rm -f /etc/init.d/housesensor ; fi
+	if [ -e /lib/systemd/system/housesensor.service ] ; then systemctl stop housesensor ; systemctl disable housesensor ; rm -f /lib/systemd/system/housesensor.service ; fi
 	mkdir -p /usr/local/bin
 	mkdir -p /var/lib/house/sensor
-	rm -f /usr/local/bin/housesensor /etc/init.d/housesensor
+	rm -f /usr/local/bin/housesensor
 	cp housesensor /usr/local/bin
-	cp init.debian /etc/init.d/housesensor
-	chown root:root /usr/local/bin/housesensor /etc/init.d/housesensor
-	chmod 755 /usr/local/bin/housesensor /etc/init.d/housesensor
+	chown root:root /usr/local/bin/housesensor
+	chmod 755 /usr/local/bin/housesensor
+	cp systemd.service /lib/systemd/system/housesensor.service
+	chown root:root /lib/systemd/system/housesensor.service
 	touch /etc/default/housesensor
 	mkdir -p /etc/house
 	touch /etc/house/sensor.config
@@ -37,7 +39,8 @@ install:
 uninstall:
 	systemctl stop housesensor
 	systemctl disable housesensor
-	rm -f /usr/local/bin/housesensor /etc/init.d/housesensor
+	rm -f /usr/local/bin/housesensor
+	rm -f /lib/systemd/system/housesensor.service /etc/init.d/housesensor
 	systemctl daemon-reload
 
 purge: uninstall
