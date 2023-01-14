@@ -2,6 +2,8 @@
 OBJS= housesensor.o housesensor_w1.o housesensor_db.o
 LIBOJS=
 
+SHARE=/usr/local/share/house
+
 all: housesensor
 
 main: housesensor.o
@@ -29,9 +31,14 @@ install:
 	chmod 755 /usr/local/bin/housesensor
 	cp systemd.service /lib/systemd/system/housesensor.service
 	chown root:root /lib/systemd/system/housesensor.service
-	touch /etc/default/housesensor
+	mkdir -p $(SHARE)/public/sensor
+	chmod 755 $(SHARE) $(SHARE)/public $(SHARE)/public/sensor
+	cp public/* $(SHARE)/public/sensor
+	chown root:root $(SHARE)/public/sensor/*
+	chmod 644 $(SHARE)/public/sensor/*
 	mkdir -p /etc/house
 	touch /etc/house/sensor.config
+	touch /etc/default/housesensor
 	systemctl daemon-reload
 	systemctl enable housesensor
 	systemctl start housesensor
@@ -39,6 +46,7 @@ install:
 uninstall:
 	systemctl stop housesensor
 	systemctl disable housesensor
+	rm -rf $(SHARE)/public/sensor
 	rm -f /usr/local/bin/housesensor
 	rm -f /lib/systemd/system/housesensor.service /etc/init.d/housesensor
 	systemctl daemon-reload
