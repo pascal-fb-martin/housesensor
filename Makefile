@@ -15,10 +15,10 @@ clean:
 rebuild: clean all
 
 %.o: %.c
-	gcc -c -g -O -o $@ $<
+	gcc -c -Os -o $@ $<
 
 housesensor: $(OBJS)
-	gcc -g -O -o housesensor $(OBJS) -lhouseportal -lechttp -lssl -lcrypto -lrt
+	gcc -Os -o housesensor $(OBJS) -lhouseportal -lechttp -lssl -lcrypto -lrt
 
 install:
 	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; systemctl disable housesensor ; rm -f /etc/init.d/housesensor ; fi
