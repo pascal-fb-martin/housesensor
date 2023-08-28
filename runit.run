@@ -1,0 +1,6 @@
+#!/bin/sh
+OPTS=
+if [ -e /etc/default/housesensor ] ; then . /etc/default/housesensor ; fi
+sv start houseportal || exit 1
+exec /usr/local/bin/housesensor $OPTS
+

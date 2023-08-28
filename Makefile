@@ -1,10 +1,30 @@
+# housesensor - A simple home web server for sensor measurement.
+#
+# Copyright 2023, Pascal Martin
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor,
+# Boston, MA  02110-1301, USA.
+
+HAPP=housesensor
+HROOT=/usr/local
+SHARE=$(HROOT)/share/house
+
+# Application build. --------------------------------------------
 
 OBJS= housesensor.o housesensor_w1.o housesensor_db.o
 LIBOJS=
-
-SHARE=/usr/local/share/house
-
-# Local build ---------------------------------------------------
 
 all: housesensor
 
@@ -24,13 +44,13 @@ housesensor: $(OBJS)
 
 # Distribution agnostic file installation -----------------------
 
-install-files:
-	mkdir -p /usr/local/bin
+install-app:
+	mkdir -p $(HROOT)/bin
 	mkdir -p /var/lib/house/sensor
-	rm -f /usr/local/bin/housesensor
-	cp housesensor /usr/local/bin
-	chown root:root /usr/local/bin/housesensor
-	chmod 755 /usr/local/bin/housesensor
+	rm -f $(HROOT)/bin/housesensor
+	cp housesensor $(HROOT)/bin
+	chown root:root $(HROOT)/bin/housesensor
+	chmod 755 $(HROOT)/bin/housesensor
 	mkdir -p $(SHARE)/public/sensor
 	chmod 755 $(SHARE) $(SHARE)/public $(SHARE)/public/sensor
 	cp public/* $(SHARE)/public/sensor
@@ -40,49 +60,16 @@ install-files:
 	touch /etc/house/sensor.config
 	touch /etc/default/housesensor
 
-uninstall:
+uninstall-app:
 	rm -rf $(SHARE)/public/sensor
-	rm -f /usr/local/bin/housesensor
+	rm -f $(HROOT)/bin/housesensor
+
+purge-app:
 
 purge-config:
 	rm -rf /etc/house/sensor.config /etc/default/housesensor /var/lib/house/sensor
 
-# Distribution agnostic systemd support -------------------------
+# System installation. ------------------------------------------
 
-install-systemd:
-	cp systemd.service /lib/systemd/system/housesensor.service
-	chown root:root /lib/systemd/system/housesensor.service
-	systemctl daemon-reload
-	systemctl enable housesensor
-	systemctl start housesensor
-
-uninstall-systemd:
-	if [ -e /etc/init.d/housesensor ] ; then systemctl stop housesensor ; systemctl disable housesensor ; rm -f /etc/init.d/housesensor ; fi
-	if [ -e /lib/systemd/system/housesensor.service ] ; then systemctl stop housesensor ; systemctl disable housesensor ; rm -f /lib/systemd/system/housesensor.service ; systemctl daemon-reload ; fi
-
-stop-systemd: uninstall-systemd
-
-# Debian GNU/Linux install --------------------------------------
-
-install-debian: stop-systemd install-files install-systemd
-
-uninstall-debian: uninstall-systemd uninstall-files
-
-purge-debian: uninstall-debian purge-config
-
-# Void Linux install --------------------------------------------
-
-install-void: install-files
-
-uninstall-void: uninstall-files
-
-purge-void: uninstall-void purge-config
-
-# Default install (Debian GNU/Linux) ----------------------------
-
-install: install-debian
-
-uninstall: uninstall-debian
-
-purge: purge-debian
+include $(SHARE)/install.mak
 
