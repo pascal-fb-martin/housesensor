@@ -303,8 +303,8 @@ void housesensor_db_set (const char *driver, const char *device,
             SensorLog = fopen (SensorLogName, "a");
         }
         if (SensorLog) {
-            fprintf (SensorLog, "%ld,%s,%s,%s,%s\n",
-                     (long)now, s->location, s->name, value, s->unit);
+            fprintf (SensorLog, "%lld,%s,%s,%s,%s\n",
+                     (long long)now, s->location, s->name, value, s->unit);
             SensorLogLastWrite = now;
         }
         SensorEventAdd (s);
