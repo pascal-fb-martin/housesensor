@@ -66,6 +66,7 @@ If the HouseSensor service is stopped, /dev/shm/housesensor.csv is moved to /var
 When the service is restarted, /var/lib/house/sensor/housesensor.csv is moved back to /dev/shm. This restores the recorded data when the OS reboots. However a system crash could cause up to one hour worth of recordings to be lost. This is a tradeoff to avoid wearing out a SD card or USB drive by rewriting the same block every minute or so.
 
 The format of the recording is comma-separated variables, where each line represents one sensor measurement with fields in the following order:
+
 * Timestamp (system time).
 * Location of sensor (unquoted string).
 * Name of sensor (unquoted string).
