@@ -16,10 +16,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA.
+#
+# WARNING
+#
+# This Makefile depends on echttp and houseportal (dev) being installed.
+
+prefix=/usr/local
+SHARE=$(prefix)/share/house
+
+INSTALL=/usr/bin/install
 
 HAPP=housesensor
-HROOT=/usr/local
-SHARE=$(HROOT)/share/house
 
 # Application build. --------------------------------------------
 
@@ -40,34 +47,30 @@ rebuild: clean all
 	gcc -c -Os -o $@ $<
 
 housesensor: $(OBJS)
-	gcc -Os -o housesensor $(OBJS) -lhouseportal -lechttp -lssl -lcrypto -lrt
+	gcc -Os -o housesensor $(OBJS) -lhouseportal -lechttp -lssl -lcrypto -lmagic -lrt
 
 # Distribution agnostic file installation -----------------------
 
-install-app:
-	mkdir -p $(HROOT)/bin
-	mkdir -p /var/lib/house/sensor
-	rm -f $(HROOT)/bin/housesensor
-	cp housesensor $(HROOT)/bin
-	chown root:root $(HROOT)/bin/housesensor
-	chmod 755 $(HROOT)/bin/housesensor
-	mkdir -p $(SHARE)/public/sensor
-	chmod 755 $(SHARE) $(SHARE)/public $(SHARE)/public/sensor
-	cp public/* $(SHARE)/public/sensor
-	chown root:root $(SHARE)/public/sensor/*
-	chmod 644 $(SHARE)/public/sensor/*
-	mkdir -p /etc/house
-	touch /etc/house/sensor.config
-	touch /etc/default/housesensor
+install-ui: install-preamble
+	$(INSTALL) -m 0755 -d $(DESTDIR)$(SHARE)/public/sensor
+	$(INSTALL) -m 0644 public/* $(DESTDIR)$(SHARE)/public/sensor
+
+install-app: install-ui
+	$(INSTALL) -m 0755 -d $(DESTDIR)/var/lib/house/sensor
+	$(INSTALL) -m 0755 -s housesensor $(DESTDIR)$(prefix)/bin
+	touch $(DESTDIR)/etc/default/housesensor
 
 uninstall-app:
-	rm -rf $(SHARE)/public/sensor
-	rm -f $(HROOT)/bin/housesensor
+	rm -rf $(DESTDIR)$(SHARE)/public/sensor
+	rm -f $(DESTDIR)$(prefix)/bin/housesensor
 
 purge-app:
 
 purge-config:
-	rm -rf /etc/house/sensor.config /etc/default/housesensor /var/lib/house/sensor
+	rm -f $(DESTDIR)/etc/default/housesensor
+	rm -f $(DESTDIR)/etc/house/sensor.config
+	rm -f $(DESTDIR)/etc/default/housesensor
+	rm -rf $(DESTDIR)/var/lib/house/sensor
 
 # System installation. ------------------------------------------
 
