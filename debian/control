@@ -1,0 +1,18 @@
+Source: housesensor
+Version: 1.0
+Section: Web servers
+Maintainer: Pascal Martin <pascal.fb.martin@gmail.com>
+Priority: optional
+Homepage: https://github.com/pascal-fb-martin/housesensor
+Standard-Version: 4.7.0
+Package: housesensor
+Architecture: {{arch}}
+Depends: 
+Description: A House service to collect measurements from external sensors
+ HouseSensor is part of the House suite of web services.
+ .
+ HouseSensor periodically collects measurements from external sensors attached
+ to the local computer. It reports these measurements to all historian services
+ it has detected (e.g. HouseSaga).
+ .
+ This curently supports 1-Wire sensors.
