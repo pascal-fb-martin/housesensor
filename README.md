@@ -1,4 +1,6 @@
-# HouseSensor - A Small Web Server to Access Physical Sensors
+# HouseSensor
+
+A Small Web Server to Access Physical Sensors
 
 ## Overview
 
@@ -22,13 +24,17 @@ The list of sensors to scan is defined in file /etc/house/sensor.config.
 There are two types of entry: options and sensors.
 
 An option entry start with the keyword OPTION:
+
 ```
 'OPTIONS' name value
 ```
+
 A sensor line start with a driver name and is made of 4 to 5 items:
+
 ```
 driver device location name [unit]
 ```
+
 The only driver supported at this time is 'w1' (the Linux interface for the 1-Wire network).
 
 For 1-Wire devices, the device is the 1-Wire ID of the sensor, e.g. 28-01162bdbf5ee or 10-000800c49886.
@@ -40,21 +46,29 @@ A unit can be specified to accommodate sensors that have no intrinsic unit.
 ## Web API
 
 The application supports the following web requests:
+
 ```
 /sensor/current
 ```
+
 Return JSON data that provides the latest value for each sensor.
+
 ```
 /sensor/recent
 ```
+
 Return JSON data that gives a list of the N most recent measurements. Each measurement comes with its own individual timestamp.
+
 ```
 /sensor/history
 ```
+
 Return JSON data that list all available historical files (see below).
+
 ```
 /sensor/records/{file}
 ```
+
 Download one historical file (in CSV format: see below).
 
 ## Historical Recording
@@ -85,6 +99,7 @@ The provided Makefile supports building private Debian packages. These are _not_
   no source package.
 
 To build a Debian package, use the `debian-package` target:
+
 ```
 make debian-package
 ```
