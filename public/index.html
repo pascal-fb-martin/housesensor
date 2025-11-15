@@ -11,8 +11,6 @@ function indexUpdate (response) {
     document.getElementsByTagName('title')[0].innerHTML =
         response.host+' - Sensors';
 
-    document.getElementById('portal').href = 'http://'+response.proxy+'/index.html';
-
     if (response.sensor) {
 
         var outertable = document.getElementById('sensors');
@@ -114,18 +112,17 @@ window.onload = function() {
 <title></title>
 </head>
 <body>
-   <table class="housetopcontainer">
-   <tr><td>
-   <table class="housetop">
+   <header>
+   <table>
    <tr>
-   <td><a id="portal" href="/index.html">Portal</a></td>
    <td><span>Sensor</span></td>
    </tr>
    </table> 
-   </td></tr>
-   </table> 
+   </header> 
+   <section>
    <table class="housepanel" id="sensors">
    </table> 
+   </section>
 </body>
 </html>
 
