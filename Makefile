@@ -45,7 +45,7 @@ clean:
 rebuild: clean all
 
 %.o: %.c
-	gcc -c -Os -o $@ $<
+	gcc -c -Wall -Os -o $@ $<
 
 housesensor: $(OBJS)
 	gcc -Os -o housesensor $(OBJS) -lhouseportal -lechttp -lssl -lcrypto -lmagic -lrt

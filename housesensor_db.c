@@ -395,8 +395,8 @@ const char *housesensor_db_recent (void) {
     gethostname (host, sizeof(host));
 
     snprintf (buffer, sizeof(buffer),
-              "{\"sensor\":{\"timestamp\":%d,\"host\":\"%s\",\"recent\":[",
-              time(0), host);
+              "{\"sensor\":{\"timestamp\":%lld,\"host\":\"%s\",\"recent\":[",
+              (long long)time(0), host);
     length = strlen(buffer);
 
     for (i = SensorEventCursor + 1; i != SensorEventCursor; ++i) {
@@ -445,11 +445,11 @@ const char *housesensor_db_history (void) {
         const char *prefix = "";
 
         snprintf (buffer, sizeof(buffer),
-                  "{\"sensor\":{\"timestamp\":%d,\"host\":\"%s\",\"history\":[",
-                  time(0), host);
+                  "{\"sensor\":{\"timestamp\":%lld,\"host\":\"%s\",\"history\":[",
+                  (long long)time(0), host);
         length = strlen(buffer);
 
-        while (de = readdir(d)) {
+        while ((de = readdir(d))) {
             if (de->d_name[0] == '.') continue;
             snprintf (buffer+length, sizeof(buffer)-length,
                       "%s\"%10.10s\"", prefix, de->d_name);
@@ -462,8 +462,8 @@ const char *housesensor_db_history (void) {
     }
 
     snprintf (buffer, sizeof(buffer),
-              "{\"sensor\":{\"timestamp\":%d,\"host\":\"%s\",\"history\":[]}}",
-              time(0), host);
+              "{\"sensor\":{\"timestamp\":%lld,\"host\":\"%s\",\"history\":[]}}",
+              (long long)time(0), host);
     return buffer;
 }
 

@@ -103,7 +103,6 @@ void housesensor_w1_initialize (int argc, const char **argv) {
 void housesensor_w1_background (time_t now) {
 
     static time_t LastScan = 0;
-    char name[256];
     const char *device;
 
     if (now >= LastScan + ScanPeriod) {
