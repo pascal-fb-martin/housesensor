@@ -49,7 +49,8 @@ static void ReadDevice (const char *id) {
     FILE *f;
 
     snprintf (name, sizeof(name), "/sys/bus/w1/devices/%s/w1_slave", id);
-    if (echttp_isdebug()) printf ("Scanning %s at %ld\n", name, time(0));
+    if (echttp_isdebug())
+        printf ("Scanning %s at %lld\n", name, (long long)time(0));
 
     f = fopen (name, "r");
     if (f) {

@@ -411,8 +411,8 @@ const char *housesensor_db_recent (void) {
             time_t timestamp = SensorEventLog[i].timestamp;
 
             snprintf (buffer+length, sizeof(buffer)-length,
-                      "%s{\"location\":\"%s\",\"name\":\"%s\",\"time\":%ld",
-                      prefix, s->location, s->name, timestamp);
+                      "%s{\"location\":\"%s\",\"name\":\"%s\",\"time\":%lld",
+                      prefix, s->location, s->name, (long long)timestamp);
             length += strlen(buffer+length);
             prefix = ",";
 
