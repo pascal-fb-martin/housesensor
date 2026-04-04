@@ -67,7 +67,7 @@ static void ReadDevice (const char *id) {
                             break;
                         }
                     }
-                    strncpy(value, p+3, sizeof(value));
+                    memccpy(value, p+3, 0, sizeof(value));
 
                     // 85000 and 127937 are two known "error values" that
                     // seem to be related to a chip reset (power issue?).

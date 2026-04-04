@@ -184,7 +184,7 @@ static void AddSensor (char **token, int count) {
     s->location = strdup(token[2]);
     s->name = strdup(token[3]);
     if (count >= 5)
-        strncpy (s->unit, token[4], sizeof(s->unit));
+        memccpy (s->unit, token[4], 0, sizeof(s->unit));
     else
         s->unit[0] = 0;
     s->value[0] = 0;
@@ -289,11 +289,11 @@ void housesensor_db_set (const char *driver, const char *device,
     }
 
     if (i < SensorCount) {
-        strncpy (s->value, value, sizeof(s->value));
+        memccpy (s->value, value, 0, sizeof(s->value));
         s->value[sizeof(s->value)-1] = 0;
 
         if (unit && s->unit[0] == 0) {
-            strncpy (s->unit, unit, sizeof(s->unit));
+            memccpy (s->unit, unit, 0, sizeof(s->unit));
             s->unit[sizeof(s->unit)-1] = 0;
         }
         s->timestamp = now;
