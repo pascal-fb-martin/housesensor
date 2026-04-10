@@ -24,6 +24,8 @@
  *
  */
 
+#include "echttp_libc.h"
+
 #include "housesensor.h"
 #include "housesensor_w1.h"
 #include "housesensor_db.h"
@@ -67,7 +69,7 @@ static void ReadDevice (const char *id) {
                             break;
                         }
                     }
-                    memccpy(value, p+3, 0, sizeof(value));
+                    strtcpy(value, p+3, sizeof(value));
 
                     // 85000 and 127937 are two known "error values" that
                     // seem to be related to a chip reset (power issue?).

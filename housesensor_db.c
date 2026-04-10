@@ -62,6 +62,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#include "echttp_libc.h"
+
 #include "houseportalclient.h"
 
 #include "housesensor.h"
@@ -184,7 +186,7 @@ static void AddSensor (char **token, int count) {
     s->location = strdup(token[2]);
     s->name = strdup(token[3]);
     if (count >= 5)
-        memccpy (s->unit, token[4], 0, sizeof(s->unit));
+        strtcpy (s->unit, token[4], sizeof(s->unit));
     else
         s->unit[0] = 0;
     s->value[0] = 0;
@@ -289,12 +291,10 @@ void housesensor_db_set (const char *driver, const char *device,
     }
 
     if (i < SensorCount) {
-        memccpy (s->value, value, 0, sizeof(s->value));
-        s->value[sizeof(s->value)-1] = 0;
+        strtcpy (s->value, value, sizeof(s->value));
 
         if (unit && s->unit[0] == 0) {
-            memccpy (s->unit, unit, 0, sizeof(s->unit));
-            s->unit[sizeof(s->unit)-1] = 0;
+            strtcpy (s->unit, unit, sizeof(s->unit));
         }
         s->timestamp = now;
         if (echttp_isdebug()) printf ("Set %s.%s to %s %s\n",
